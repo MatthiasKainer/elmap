@@ -1,0 +1,14 @@
+language: node_js
+node_js:
+  - "7.7.1"
+
+before_script:
+  - npm install -g typescript
+
+deploy:
+  provider: npm
+  email: $NPM_EMAIL
+  api_key: $NPM_TOKEN
+  skip_cleanup: true
+  on: 
+    branch: master

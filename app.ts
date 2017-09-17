@@ -1,7 +1,7 @@
 import { performQuery } from "./src/QueryWrapper"
 import { ElasticResult } from "./src/models/ElasticResult";
 import { ElasticQuery } from "./src/services/ElasticQueryable";
-import Config from "./src/models/config";
+import Config from "./src/models/Config";
 import * as moment from 'moment';
 import * as yaaaarr from "yargs";
 import { DateRange } from "./src/models/Date";
