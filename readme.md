@@ -64,8 +64,8 @@ const transform = (result) => {
 };
 
 const range = {
-    from : "",
-    to: ""
+    from : new Date(new Date().getTime() + -15*60000),
+    to: new Date()
 }
 
 elmap({
@@ -103,7 +103,7 @@ All the beauty of map reduce now with elasticsearch queries.
 | index | The ElasticSearch Index you want to query | 
 | query | Your search query | 
 | transform | A function that applies a specified function on your queries result. See below for more details |
-| range | A javascript object with two fields, `from` and `to` that provide options to specify the daterange to query. Default is the last 15min | 
+| range | A javascript object with two fields, `from` and `to` both `Date` Object as option to specify the daterange to query. Default is the last 15min | 
 
 ### The transformation
 
@@ -128,3 +128,5 @@ This will show your first hit. From there you should be able to proceed.
 Querying ElasticSearch can be slow if you have a lot of items. Which you tend to have, that's why you used elasticsearch in the first place. To be able to execute multiple transformations faster, `elmap` stores the result for a datetime/query combination in the `data` folder. If you want this folder for something else you can set it by the environment variable `ELMAP_PATH` (relative to your current working directory).
 
 If your result changes because you changed your elasticsearch index for instance, pls do not forget to clear your cache first.
+
+Note that as long as you query the last 15 minutes (default) the cache won't do you any good, as the last 15 Minutes change for like every millisecond!
