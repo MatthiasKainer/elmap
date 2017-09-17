@@ -1,6 +1,6 @@
 {
   "name": "elmap",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "simple elasticsearch queries",
   "main": "app.js",
   "scripts": {

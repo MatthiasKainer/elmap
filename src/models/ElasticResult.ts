@@ -6,27 +6,6 @@
     }
 
     interface Source {
-        vertical: string;
-        "@version": number;
-        version: string;
-        container_name: string;
-        serviceName: string;
-        timestamp: string;
-        id: string;
-        HOSTNAME: string;
-        level: string;
-        _id: string;
-        "@hostname": string;
-        created: string;
-        "@vertical": string;
-        message: string;
-        "@timestamp": Date;
-        source: string;
-        pod_name: string;
-        logger_name: string;
-        forwarder: string;
-        "@service-name": string;
-        container_id: string;
         [key: string]: any;
     }
 
