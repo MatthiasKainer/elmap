@@ -3,6 +3,6 @@
 node_modules/
 data/
 src/**/*.js
-src/**/*.map.js
+src/**/*.js.map
 app.js
 app.js.map

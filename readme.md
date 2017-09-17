@@ -1,5 +1,7 @@
 # elmap
 
+[![travisci](https://api.travis-ci.org/MatthiasKainer/elmap.svg?branch=master)](https://travis-ci.org/MatthiasKainer/elmap/)
+
 A module that allows you to perform queries with transformations on your elasticsearch. 
 
 Featuring query-result caching, so no worries if you have to play around with your transformations. 
