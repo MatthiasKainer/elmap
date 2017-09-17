@@ -1,6 +1,6 @@
 {
   "name": "elmap",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "simple elasticsearch queries",
   "main": "app.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "test": "tsc && node_modules/.bin/mocha test/**/*.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "7.0.43",
     "@types/request": "2.0.3",
