@@ -1,0 +1,8 @@
+.DS_Store
+.vscode/
+node_modules/
+data/
+src/**/*.js
+src/**/*.map.js
+app.js
+app.js.map
