@@ -1,6 +1,6 @@
 {
   "name": "elmap",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "simple elasticsearch queries",
   "main": "app.js",
   "scripts": {
@@ -24,5 +24,12 @@
     "moment": "2.18.1",
     "request": "2.0.3",
     "yargs": "^8.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MatthiasKainer/elmap.git"
+  },
+  "bugs" : {
+    "url": "https://github.com/MatthiasKainer/elmap/issues"
   }
 }
