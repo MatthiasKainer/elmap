@@ -92,13 +92,14 @@ export class ElasticResultHandler {
         });
     }
 
-    private onResult(query: ElasticQueryItem, result: ElasticResult, progress) {
+    private onResult(query: ElasticQueryItem, result: ElasticResult, progress, resultSize : number) {
         return new Promise((resolve, reject) => {
-            progress.tick(result.hits.hits.length);
-            if (result.hits.hits.length < result.hits.total) {
+            const length = result.hits.hits.length;
+            progress.tick(resultSize);
+            if (length < result.hits.total) {
                 return this.doQuery(query, (resolve, reject, response) => {
                     result.hits.hits.push(...response.hits.hits);
-                    return this.onResult(query, result, progress).then(resolve).catch(reject);
+                    return this.onResult(query, result, progress, response.hits.hits.length).then(resolve).catch(reject);
                 }, result.hits.hits.length).then(resolve).catch(reject);
             }
 
@@ -125,7 +126,7 @@ export class ElasticResultHandler {
                     schema: "[:bar.gradient(red,green)] :current.blue of :total hits loaded.blue :percent.green :elapseds :etas",
                     total
                 });
-                this.onResult(queryItem, result, bar)
+                this.onResult(queryItem, result, bar, result.hits.hits.length)
                     .then(resolve)
                     .catch(reject);
             }).then(resolve).catch(reject);
