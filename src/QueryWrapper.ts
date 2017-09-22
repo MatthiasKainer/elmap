@@ -11,16 +11,8 @@ export function performQuery(query: string, range: DateRange, transform: (result
     range = Object.assign({ from: moment().subtract(15, 'minutes').toDate(), to: moment().toDate() }, range);
     transform = transform || ((_) => _);
     return new Promise((resolve, reject) => {
-        let innerPromise = (cache.has(range, query))
-            ? cache.get(range, query)
-            : queryable.doQuery(query, range);
-
-        innerPromise
-            .then((result: ElasticResult) => {
-                cache.set(range, query, result)
-                    .then(() => resolve(transform(result)))
-                    .catch(reject);
-            })
+        queryable.doQuery(query, range)
+            .then((result: ElasticResult) => resolve(transform(result)))
             .catch(reject);
     })
 }

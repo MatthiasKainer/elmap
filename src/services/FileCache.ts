@@ -1,42 +1,38 @@
-const JSONStreamStringify = require("json-stream-stringify");
+const JSONStream = require("JSONStream");
 
 import * as fs from "fs";
 import { DateRange } from "../models/Date";
 
 export class FileCache {
 
-    private makePath(range: DateRange, query) {
+    private makePath(range: DateRange, query, create: boolean = true) {
         const dataFolder = process.env.ELMAP_PATH || "data";
         const root = `${process.cwd()}/${dataFolder}`;
-        if (!fs.existsSync(root)) fs.mkdirSync(root);
-        return `${root}/${range.from.getTime()}-${range.to.getTime()}-${query}`;
+        const target = `${root}/${range.from.getTime()}-${range.to.getTime()}-${query}`;
+        if (create && !fs.existsSync(root)) fs.mkdirSync(root);
+        if (create && !fs.existsSync(target)) fs.mkdirSync(target);
+        return target;
     }
 
     public has(range, query): boolean {
-        return fs.existsSync(this.makePath(range, query));
+        return fs.existsSync(this.makePath(range, query, false));
     }
 
-    public get(range, query) {
+    public get(range, query, index) {
         return new Promise((resolve, reject) => {
-            fs.readFile(this.makePath(range, query), "utf-8", (err, data) => {
+            fs.readFile(`${this.makePath(range, query)}/${index}`, "utf-8", (err, data) => {
                 if (err) return reject(err);
                 else return resolve(JSON.parse(data));
             })
         });
     }
 
-    public set(range, query, content) {
+    public set(range, query, index, content) {
         return new Promise((resolve, reject) => {
-            if (!this.has(range, query)) {
-                var stream = fs.createWriteStream(this.makePath(range, query), { encoding: "utf-8" });
-                JSONStreamStringify(content)
-                    .pipe(stream)
-                    .on("error", (err) => reject(err))
-                    .on("end", () => {
-                        console.log(`Cache entry written for ${this.makePath(range, query)}`);
-                        resolve(this.makePath(range, query));
-                    });
-            }
+            const file = this.makePath(range, query);
+            fs.writeFile(`${file}/${index}`, JSON.stringify(content), (err) => {
+                return err ? reject(err) : resolve();
+            });
         });
     }
 }

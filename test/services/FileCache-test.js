@@ -9,15 +9,17 @@ chai.use(require("chai-as-promised"));
 chai.should();
 const error = new Error("oh no");
 
-const basePath = process.cwd();
-const dataPath = `${basePath}/data`;
 const range = {
     from: new Date(),
     to: new Date()
 };
 const query = "item";
-const fileName = `${range.from.getTime()}-${range.to.getTime()}-${query}`;
-const fullFileName = `${dataPath}/${fileName}`;
+
+const basePath = process.cwd();
+const dataPath = `${basePath}/data`;
+const cacheItemDir = `${dataPath}/${range.from.getTime()}-${range.to.getTime()}-${query}`
+const fileName = `0`;
+const fullFileName = `${cacheItemDir}/${fileName}`;
 const fileContent = { "not" : "important" };
 
 let baseDir = {};
@@ -52,9 +54,9 @@ describe("Given I want to use the FileCache", () => {
                     result = subject.has(range, query)
                 });
 
-                it("should have created the path", () => {
-                    mkdirSync.calledWith(dataPath).should.be.true;
-                    fs.existsSync(dataPath).should.be.true;
+                it("should not have created the path", () => {
+                    mkdirSync.calledWith(dataPath).should.be.false;
+                    fs.existsSync(dataPath).should.be.false;
                 });
 
                 it("should return false", () => {
@@ -65,12 +67,13 @@ describe("Given I want to use the FileCache", () => {
                     let writeFile = sandbox.spy();
 
                     beforeEach(() => {
-                        writeFile = sandbox.spy(fs, "createWriteStream");
-                        result = subject.set(range, query, fileContent);
+                        writeFile = sandbox.spy(fs, "writeFile");
+                        result = subject.set(range, query, 0, fileContent);
                     });
 
                     it("should write the file", () => {
                         writeFile.getCall(0).args[0].should.be.equals(fullFileName);
+                        writeFile.getCall(0).args[1].should.be.equals(JSON.stringify(fileContent));
                         fs.existsSync(fullFileName).should.be.true;
                     });
                 });
@@ -111,7 +114,7 @@ describe("Given I want to use the FileCache", () => {
         describe("When the file exists", () => {
             beforeEach(() => {
                 mockFs(fileInDir);
-                result = subject.get(range, query);
+                result = subject.get(range, query, 0);
             });
 
             it("should load the cache item correctly", () => {
@@ -122,7 +125,7 @@ describe("Given I want to use the FileCache", () => {
         describe("When the file does not exist", () => {
             beforeEach(() => {
                 mockFs(baseDir);
-                result = subject.get(range, query);
+                result = subject.get(range, query, 0);
             });
 
             it("should fail", () => {
