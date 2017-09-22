@@ -120,6 +120,18 @@ describe("Given I want to use the FileCache", () => {
             it("should load the cache item correctly", () => {
                 return result.should.become(fileContent);
             });
+
+            describe("And I want to validate the expected number of shards are available", () => {
+                it("should validate the cache", () => {
+                    subject.validateCache(range, query, 1).should.be.true;
+                });
+            });
+
+            describe("And I want to validate the expected number of shards are available", () => {
+                it("should invalidate the cache", () => {
+                    subject.validateCache(range, query, 2).should.be.false;
+                });
+            })
         });
 
         describe("When the file does not exist", () => {

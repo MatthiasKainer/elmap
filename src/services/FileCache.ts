@@ -18,6 +18,10 @@ export class FileCache {
         return fs.existsSync(this.makePath(range, query, false));
     }
 
+    public validateCache(range, query, expectedShards): boolean {
+        return fs.readdirSync(this.makePath(range, query)).length === expectedShards;
+    }
+
     public get(range, query, index) {
         return new Promise((resolve, reject) => {
             fs.readFile(`${this.makePath(range, query)}/${index}`, "utf-8", (err, data) => {
