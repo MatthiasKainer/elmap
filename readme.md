@@ -99,7 +99,7 @@ All the beauty of map reduce now with elasticsearch queries.
 
 | Field | Description |
 |---|---|
-| url | The url for your elasticsearch instance in the format protocol://url:port, i.e. http://localhost:9300 | 
+| url | The url for your elasticsearch instance in the format protocol://url:port, i.e. http://localhost:9300. Supports query through kibana as well, i.e. https://kibana:kibana@yourkibana.net/elasticsearch | 
 | index | The ElasticSearch Index you want to query | 
 | query | Your search query | 
 | transform | A function that applies a specified function on your queries result. See below for more details |
