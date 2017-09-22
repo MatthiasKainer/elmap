@@ -24,7 +24,7 @@ export class ElasticQueryExecutor {
 
 class ElasticQueryItem {
     private body: Object;
-    private size = 25;
+    private size = 1000;
     query: string;
     range: DateRange;
 

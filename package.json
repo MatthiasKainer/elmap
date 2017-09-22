@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "ascii-progress": "^1.0.5",
+    "json-stream-stringify": "^1.5.1",
     "moment": "2.18.1",
     "request": "2.0.3",
     "yargs": "^8.0.2"
@@ -29,7 +30,7 @@
     "type": "git",
     "url": "https://github.com/MatthiasKainer/elmap.git"
   },
-  "bugs" : {
+  "bugs": {
     "url": "https://github.com/MatthiasKainer/elmap/issues"
   }
 }

@@ -17,8 +17,9 @@ export function performQuery(query: string, range: DateRange, transform: (result
 
         innerPromise
             .then((result: ElasticResult) => {
-                cache.set(range, query, result);
-                resolve(transform(result));
+                cache.set(range, query, result)
+                    .then(() => resolve(transform(result)))
+                    .catch(reject);
             })
             .catch(reject);
     })

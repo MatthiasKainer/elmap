@@ -1,3 +1,5 @@
+const JSONStreamStringify = require("json-stream-stringify");
+
 import * as fs from "fs";
 import { DateRange } from "../models/Date";
 
@@ -24,8 +26,17 @@ export class FileCache {
     }
 
     public set(range, query, content) {
-        if (!this.has(range, query)) {
-            fs.writeFile(this.makePath(range, query), JSON.stringify(content), "utf-8", () => { });
-        }
+        return new Promise((resolve, reject) => {
+            if (!this.has(range, query)) {
+                var stream = fs.createWriteStream(this.makePath(range, query), { encoding: "utf-8" });
+                JSONStreamStringify(content)
+                    .pipe(stream)
+                    .on("error", (err) => reject(err))
+                    .on("end", () => {
+                        console.log(`Cache entry written for ${this.makePath(range, query)}`);
+                        resolve(this.makePath(range, query));
+                    });
+            }
+        });
     }
 }

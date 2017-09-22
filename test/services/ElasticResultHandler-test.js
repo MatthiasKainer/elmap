@@ -130,8 +130,8 @@ const singlePageResult = {
 
 const firstPageResult = {
     "hits": {
-        "total": 26,
-        "hits": new Array(25).map((val, index) => {
+        "total": 1001,
+        "hits": new Array(1000).map((val, index) => {
             return {
                 "_id": index.toString()
             }
@@ -141,7 +141,7 @@ const firstPageResult = {
 
 const secondPageResult = {
     "hits": {
-        "total": 26,
+        "total": 1001,
         "hits": [
             {
                 "_id": "second"

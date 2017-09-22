@@ -65,15 +65,14 @@ describe("Given I want to use the FileCache", () => {
                     let writeFile = sandbox.spy();
 
                     beforeEach(() => {
-                        writeFile = sandbox.spy(fs, "writeFile");
+                        writeFile = sandbox.spy(fs, "createWriteStream");
                         result = subject.set(range, query, fileContent);
                     });
 
                     it("should write the file", () => {
                         writeFile.getCall(0).args[0].should.be.equals(fullFileName);
-                        writeFile.getCall(0).args[1].should.be.equals(JSON.stringify(fileContent));
                         fs.existsSync(fullFileName).should.be.true;
-                    })
+                    });
                 });
             });
 
