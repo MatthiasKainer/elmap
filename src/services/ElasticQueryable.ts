@@ -8,7 +8,13 @@ var ProgressBar = require('ascii-progress');
 export class ElasticQueryExecutor {
     public execute(url: string, json: Object) {
         return new Promise((resolve, reject) => {
-            request({ method: "POST", url, json }, (err, result) => {
+            const uri = require("url").parse(url);
+            let auth = null;
+            if (uri.auth) {
+                auth = uri.auth;
+                url = url.replace(uri.auth + "@", "");
+            }
+            request({ method: "GET", url, auth, json }, (err, result) => {
                 if (err || result.statusCode > 399) return reject(err || new Error(result.body.error));
                 else resolve(result.body);
             });
