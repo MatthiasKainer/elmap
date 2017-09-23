@@ -29,7 +29,7 @@
     "type": "git",
     "url": "https://github.com/MatthiasKainer/elmap.git"
   },
-  "bugs" : {
+  "bugs": {
     "url": "https://github.com/MatthiasKainer/elmap/issues"
   }
 }

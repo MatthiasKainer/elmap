@@ -2,10 +2,15 @@ const mocha = require("mocha");
 const chai = require("chai");
 const sinon = require("sinon");
 const elastic = require("../../src/services/ElasticQueryable");
+const mockFs = require("mock-fs");
 
 chai.use(require("chai-as-promised"));
 chai.should();
 const error = new Error("oh no");
+const range = {
+    from : new Date(),
+    to : new Date()
+}
 
 describe("Given I want to get results from an ElasticQueryExecutor", () => {
     let sandbox = sinon.sandbox.create();
@@ -15,6 +20,7 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
     const subject = new elastic.ElasticResultHandler(request);
 
     beforeEach(() => {
+        mockFs(`${process.cwd()}/data`);
         sandbox = sinon.sandbox.create();
         fakeRequest = sandbox.stub(request, "execute");
     });
@@ -23,7 +29,7 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
 
         beforeEach(() => {
             fakeRequest.rejects(error);
-            result = subject.start("url", {});
+            result = subject.start("url", range);
         });
 
         it("should reject the results", () => {
@@ -38,7 +44,7 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
     describe("and the server responds with a page without any results", () => {
         beforeEach(() => {
             fakeRequest.resolves(emptyResult);
-            result = subject.start("url", {});
+            result = subject.start("url", range);
         });
 
         it("should return a valid result", () => {
@@ -53,7 +59,7 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
     describe("and the server responds with a page containing all results", () => {
         beforeEach(() => {
             fakeRequest.resolves(singlePageResult);
-            result = subject.start("url", {});
+            result = subject.start("url", range);
         });
 
         it("should return a valid result", () => {
@@ -72,7 +78,7 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
             beforeEach(() => {
                 fakeRequest.onFirstCall().resolves(firstPageResult);
                 fakeRequest.onSecondCall().rejects(error);
-                result = subject.start("url", {});
+                result = subject.start("url", range);
             });
 
             it("should return an error", () => {
@@ -89,7 +95,7 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
                 fakeRequest.onFirstCall().resolves(firstPageResult);
                 fakeRequest.onSecondCall().resolves(secondPageResult);
                 fakeRequest.onThirdCall().rejects(error);
-                result = subject.start("url", {});
+                result = subject.start("url", range);
             });
 
             it("should return a combined result", () => {
@@ -130,8 +136,8 @@ const singlePageResult = {
 
 const firstPageResult = {
     "hits": {
-        "total": 26,
-        "hits": new Array(25).map((val, index) => {
+        "total": 1001,
+        "hits": new Array(1000).map((val, index) => {
             return {
                 "_id": index.toString()
             }
@@ -141,7 +147,7 @@ const firstPageResult = {
 
 const secondPageResult = {
     "hits": {
-        "total": 26,
+        "total": 1001,
         "hits": [
             {
                 "_id": "second"

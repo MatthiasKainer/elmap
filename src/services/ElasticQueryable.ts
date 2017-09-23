@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import { ElasticResult } from "../models/ElasticResult";
 import { Queryable } from "./Queryable";
 import { DateRange } from "../models/Date";
+import { FileCache } from "./FileCache";
 var ProgressBar = require('ascii-progress');
 
 export class ElasticQueryExecutor {
@@ -16,7 +17,7 @@ export class ElasticQueryExecutor {
             }
             request({ method: "GET", url, auth, json }, (err, result) => {
                 if (err || result.statusCode > 399) return reject(err || new Error(result.body.error));
-                else resolve(result.body);
+                else resolve((!result.body.hits ? JSON.parse(result.body) : result.body));
             });
         });
     }
@@ -24,7 +25,7 @@ export class ElasticQueryExecutor {
 
 class ElasticQueryItem {
     private body: Object;
-    private size = 25;
+    private size = 1000;
     query: string;
     range: DateRange;
 
@@ -88,24 +89,51 @@ export class ElasticResultHandler {
         this.url = url;
     }
 
-    private doQuery(query: ElasticQueryItem, onLoaded: (resolve, reject, result: ElasticResult) => Promise<any>, fromItem: number = 0) {
+    private push(target, startIndex, elements) {
+        elements.forEach((element, index) => {
+            target[startIndex + index] = element;
+        });
+    }
+
+    private doUrlQuery(query: ElasticQueryItem, onLoaded: (resolve, reject, result: ElasticResult) => Promise<any>, fromItem: number = 0) {
         return new Promise((resolve, reject) => {
             this.query.execute(this.url, query.getBody(fromItem))
                 .then((result: ElasticResult) => {
+                    new FileCache().set(query.range, query.query, fromItem, result);
                     return onLoaded(resolve, reject, result);
                 })
                 .catch(reject);
         });
     }
 
-    private onResult(query: ElasticQueryItem, result: ElasticResult, progress, resultSize : number) {
+    private doCacheQuery(query: ElasticQueryItem, onLoaded: (resolve, reject, result: ElasticResult) => Promise<any>, fromItem: number = 0) {
+        return new Promise((resolve, reject) => {
+            new FileCache().get(query.range, query.query, fromItem)
+                .then((result: ElasticResult) => {
+                    return onLoaded(resolve, reject, result);
+                }).catch(reject);
+        });
+    }
+
+    private onResult(doQuery: (query: ElasticQueryItem, onLoaded: (resolve, reject, result: ElasticResult) => Promise<any>, fromItem: number) => Promise<any>,
+        query: ElasticQueryItem,
+        result: ElasticResult,
+        progress,
+        resultSize: number,
+        index: number) {
         return new Promise((resolve, reject) => {
             const length = result.hits.hits.length;
             progress.tick(resultSize);
             if (length < result.hits.total) {
-                return this.doQuery(query, (resolve, reject, response) => {
-                    result.hits.hits.push(...response.hits.hits);
-                    return this.onResult(query, result, progress, response.hits.hits.length).then(resolve).catch(reject);
+                return doQuery(query, (resolve, reject, response) => {
+                    this.push(result.hits.hits, index, response.hits.hits);
+                    return this.onResult(doQuery,
+                        query,
+                        result,
+                        progress,
+                        response.hits.hits.length,
+                        index + response.hits.hits.length)
+                        .then(resolve).catch(reject);
                 }, result.hits.hits.length).then(resolve).catch(reject);
             }
 
@@ -116,7 +144,10 @@ export class ElasticResultHandler {
     public start(query: string, range: DateRange) {
         return new Promise((resolve, reject) => {
             const queryItem = new ElasticQueryItem(query, range);
-            return this.doQuery(queryItem, (resolve, reject, result) => {
+            const doQuery = new FileCache().has(range, query)
+                ? this.doCacheQuery.bind(this)
+                : this.doUrlQuery.bind(this);
+            return doQuery(queryItem, (resolve, reject, result) => {
                 const total = result.hits.total;
                 if (total < 1) {
                     console.log(`No results for this query.`);
@@ -127,12 +158,16 @@ export class ElasticResultHandler {
                     return resolve(result);
                 }
 
-                console.log(`Found ${result.hits.total} results. Please wait while loading.`)
+                console.log(`Found ${result.hits.total} results. Please wait while loading.`);
+
+                let resultSize = result.hits.hits.length;
+                let hits = new Array(result.hits.total);
+
                 const bar = new ProgressBar({
                     schema: "[:bar.gradient(red,green)] :current.blue of :total hits loaded.blue :percent.green :elapseds :etas",
                     total
                 });
-                this.onResult(queryItem, result, bar, result.hits.hits.length)
+                this.onResult(doQuery, queryItem, result, bar, resultSize, resultSize)
                     .then(resolve)
                     .catch(reject);
             }).then(resolve).catch(reject);
