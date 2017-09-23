@@ -1,6 +1,6 @@
 {
   "name": "elmap",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "simple elasticsearch queries",
   "main": "app.js",
   "scripts": {
@@ -12,18 +12,18 @@
   "devDependencies": {
     "@types/node": "7.0.43",
     "@types/request": "2.0.3",
-    "@types/yargs": "^8.0.2",
-    "chai": "^4.1.2",
-    "chai-as-promised": "^7.1.1",
-    "mocha": "^3.5.3",
-    "mock-fs": "^4.4.1",
-    "sinon": "^3.2.1"
+    "@types/yargs": "8.0.2",
+    "chai": "4.1.2",
+    "chai-as-promised": "7.1.1",
+    "mocha": "3.5.3",
+    "mock-fs": "4.4.1",
+    "sinon": "3.2.1"
   },
   "dependencies": {
-    "ascii-progress": "^1.0.5",
+    "ascii-progress": "1.0.5",
     "moment": "2.18.1",
     "request": "2.0.3",
-    "yargs": "^8.0.2"
+    "yargs": "8.0.2"
   },
   "repository": {
     "type": "git",
