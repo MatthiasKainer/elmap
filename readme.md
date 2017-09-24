@@ -130,3 +130,34 @@ Querying ElasticSearch can be slow if you have a lot of items. Which you tend to
 If your result changes because you changed your elasticsearch index for instance, pls do not forget to clear your cache first.
 
 Note that as long as you query the last 15 minutes (default) the cache won't do you any good, as the last 15 Minutes change for like every millisecond!
+
+## Helpers
+
+To make object creation more convienient, elmap comes with some helpers to make object creation easier.
+
+You can include them using 
+```js
+const helpers = require("elmap").helpers;
+// or 
+import { helpers } from "elmap";
+```
+
+### Result Prettifiers
+
+Result Prettyfiers are functions that should help you make your result more comprehensible.
+
+| Function | Usage | Description | 
+|---|---|---|
+| sortProps| [test](blob/master/test/utils/sortProps.js) | Sorts all properties in all objects and their children. |
+
+
+### Object helpers
+
+Object helpers allow you to safely and easy set fields in objects that does not have existed before. This can be helpful for reduce functions. 
+
+| Function | Usage | Description | 
+|---|---|---|
+| set| [test](blob/master/test/utils/set.js) | sets an object at a field. Overwrite everything that was there. |
+| push| [test](blob/master/test/utils/push.js) | Pushes an element onto an array. Creates array if not there yet. |
+| increment| [test](blob/master/test/utils/increment.js) | Increments a number on a field. |
+| stringcat| [test](blob/master/test/utils/stringcat.js) | Adds a value to the end of a string |

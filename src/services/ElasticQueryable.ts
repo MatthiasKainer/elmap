@@ -79,6 +79,26 @@ class ElasticQueryItem {
     }
 }
 
+class ProgressBarWrapper {
+    bar;
+    constructor(total: number) {
+        try {
+            if (require('get-cursor-position').sync()) {
+                this.bar = new ProgressBar({
+                    schema: "[:bar.gradient(red,green)] :current.blue of :total hits loaded.blue :percent.green :elapseds :etas",
+                    total
+                })
+            }
+        } catch (err) {
+            console.log(`Progress bar could not be loaded.`);
+        }
+    }
+
+    public tick(by: number) {
+        if (this.bar) this.bar.tick(by);
+    }
+}
+
 export class ElasticResultHandler {
     query: ElasticQueryExecutor;
     result: ElasticResult;
@@ -163,10 +183,7 @@ export class ElasticResultHandler {
                 let resultSize = result.hits.hits.length;
                 let hits = new Array(result.hits.total);
 
-                const bar = new ProgressBar({
-                    schema: "[:bar.gradient(red,green)] :current.blue of :total hits loaded.blue :percent.green :elapseds :etas",
-                    total
-                });
+                const bar = new ProgressBarWrapper(total);
                 this.onResult(doQuery, queryItem, result, bar, resultSize, resultSize)
                     .then(resolve)
                     .catch(reject);
