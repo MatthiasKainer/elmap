@@ -2,6 +2,7 @@ const mocha = require("mocha");
 const chai = require("chai");
 const sinon = require("sinon");
 const elastic = require("../../src/services/ElasticQueryable");
+const FileCache = require("../../src/services/FileCache").FileCache;
 const mockFs = require("mock-fs");
 
 chai.use(require("chai-as-promised"));
@@ -10,7 +11,7 @@ const error = new Error("oh no");
 const range = {
     from : new Date(),
     to : new Date()
-}
+};
 
 describe("Given I want to get results from an ElasticQueryExecutor", () => {
     let sandbox = sinon.sandbox.create();
@@ -91,10 +92,13 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
         });
 
         describe("and both are successful", () => {
+            let writeFile;
+
             beforeEach(() => {
                 fakeRequest.onFirstCall().resolves(firstPageResult);
                 fakeRequest.onSecondCall().resolves(secondPageResult);
                 fakeRequest.onThirdCall().rejects(error);
+                writeFile = sandbox.spy(FileCache.prototype, "set");
                 result = subject.start("url", range);
             });
 
@@ -105,6 +109,10 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
 
             it("should have requested a result page exactly twice", () => {
                 return result.should.not.be.rejected;
+            });
+
+            xit("should have written to cache twice", () => {
+                writeFile.callCount.should.be.equal(2);
             });
         });
 
