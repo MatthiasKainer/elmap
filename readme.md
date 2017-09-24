@@ -1,8 +1,8 @@
 # elmap
 
-[![travisci](https://api.travis-ci.org/MatthiasKainer/elmap.svg?branch=master)](https://travis-ci.org/MatthiasKainer/elmap/)
+[![travisci](https://api.travis-ci.org/MatthiasKainer/elmap.svg?branch=master)](https://travis-ci.org/MatthiasKainer/elmap/) [![npm version](https://badge.fury.io/js/elmap.svg)](https://badge.fury.io/js/elmap)
 
-A module that allows you to perform queries with transformations on your elasticsearch. 
+A module that allows you to perform queries with transformations on your elasticsearch. Supposed to be used for your ELK-Stack, where you may want to refine certain kibana queries and add map/reduce functionality to them.
 
 Featuring query-result caching, so no worries if you have to play around with your transformations. 
 
