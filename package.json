@@ -6,7 +6,7 @@
   "scripts": {
     "start": "tsc && node app.js",
     "test": "tsc && node_modules/.bin/mocha test/**/*.js",
-    "test:coverage": "./node_modules/istanbul/lib/cli.js cover -x \"*.d.ts\" -x \"test/**/*.js\" node_modules/.bin/_mocha -- -R spec test/**/*.js && istanbul-coveralls"
+    "test:coverage": "./node_modules/.bin/ts-node ./node_modules/istanbul/lib/cli.js cover -x \"*.d.ts\" -x \"test/**/*.js\" node_modules/.bin/_mocha -- --compilers ts:ts-node/register -R spec test/**/*.js && istanbul-coveralls"
   },
   "author": "",
   "license": "MIT",
@@ -20,7 +20,9 @@
     "istanbul-coveralls": "^1.0.3",
     "mocha": "3.5.3",
     "mock-fs": "4.4.1",
-    "sinon": "3.2.1"
+    "sinon": "3.2.1",
+    "ts-node": "3.3.0",
+    "typescript": "2.5.3"
   },
   "dependencies": {
     "ascii-progress": "1.0.5",
