@@ -12,8 +12,10 @@ export class FileCache {
         return target;
     }
 
-    public has(range, query): boolean {
-        return fs.existsSync(this.makePath(range, query, false));
+    public has(range, query, index: number = -1): boolean {
+        return (index >= 0)
+            ? fs.existsSync(`${this.makePath(range, query, false)}/${index}`)
+            : fs.existsSync(this.makePath(range, query, false));
     }
 
     public validateCache(range, query, expectedShards): boolean {

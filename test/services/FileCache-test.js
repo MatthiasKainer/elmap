@@ -79,7 +79,7 @@ describe("Given I want to use the FileCache", () => {
                 });
             });
 
-            describe("But the cache folder already exists", () => {
+            describe("But the base data folder already exists", () => {
                 let mkdirSync = sandbox.spy();
                 beforeEach(() => {
                     mockFs(dataDir);
@@ -117,6 +117,10 @@ describe("Given I want to use the FileCache", () => {
                 result = subject.get(range, query, 0);
             });
 
+            it("should say the file exists if asked", () => {
+                subject.has(range, query, 0).should.be.true;
+            });
+
             it("should load the cache item correctly", () => {
                 return result.should.become(fileContent);
             });
@@ -138,6 +142,10 @@ describe("Given I want to use the FileCache", () => {
             beforeEach(() => {
                 mockFs(baseDir);
                 result = subject.get(range, query, 0);
+            });
+
+            it("should deny any existance of the file in case anybody asks", () => {
+                return subject.has(range, query, 0).should.be.false;
             });
 
             it("should fail", () => {

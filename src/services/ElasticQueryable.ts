@@ -135,8 +135,7 @@ export class ElasticResultHandler {
         });
     }
 
-    private onResult(doQuery: (query: ElasticQueryItem, onLoaded: (resolve, reject, result: ElasticResult) => Promise<any>, fromItem: number) => Promise<any>,
-        query: ElasticQueryItem,
+    private onResult(query: ElasticQueryItem,
         result: ElasticResult,
         progress,
         resultSize: number,
@@ -144,11 +143,10 @@ export class ElasticResultHandler {
         return new Promise((resolve, reject) => {
             const length = result.hits.hits.length;
             progress.tick(resultSize);
-            if (length < result.hits.total) {
-                return doQuery(query, (resolve, reject, response) => {
+            if (index < result.hits.total) {
+                return this.doCacheQueryFactory(query, (resolve, reject, response) => {
                     this.push(result.hits.hits, index, response.hits.hits);
-                    return this.onResult(doQuery,
-                        query,
+                    return this.onResult(query,
                         result,
                         progress,
                         response.hits.hits.length,
@@ -161,13 +159,36 @@ export class ElasticResultHandler {
         });
     }
 
+    private doCacheQueryFactory(query: ElasticQueryItem, onLoaded: (resolve, reject, result: ElasticResult) => Promise<any>, fromItem: number = 0) { 
+        return new FileCache().has(query.range, query.query, fromItem)
+            ? this.doCacheQuery(query, onLoaded, fromItem)
+            : this.doUrlQuery(query, onLoaded, fromItem)
+    }
+
+    private shallowCloneElasticResult(result) {
+        const total = result.hits.total;
+        const resultSize = result.hits.hits.length;
+        const hits = new Array(total);
+    
+        // shallow clone result with complete hits
+        let resultContainer : any = { hits : {hits} };
+        Object.keys(result).filter(key => key !== "hits").forEach(key => {
+            resultContainer[key] = result[key];
+        });
+    
+        Object.keys(result.hits).filter(key => key !== "hits").forEach(key => {
+            resultContainer.hits[key] = result.hits[key];
+        });
+    
+        this.push(resultContainer.hits.hits, 0, result.hits.hits);
+    
+        return resultContainer;
+    }
+
     public start(query: string, range: DateRange) {
         return new Promise((resolve, reject) => {
             const queryItem = new ElasticQueryItem(query, range);
-            const doQuery = new FileCache().has(range, query)
-                ? this.doCacheQuery.bind(this)
-                : this.doUrlQuery.bind(this);
-            return doQuery(queryItem, (resolve, reject, result) => {
+            return this.doCacheQueryFactory(queryItem, (resolve, reject, result) => {
                 const total = result.hits.total;
                 if (total < 1) {
                     console.log(`No results for this query.`);
@@ -178,13 +199,13 @@ export class ElasticResultHandler {
                     return resolve(result);
                 }
 
-                console.log(`Found ${result.hits.total} results. Please wait while loading.`);
+                console.log(`Found ${total} results. Please wait while loading.`);
 
-                let resultSize = result.hits.hits.length;
-                let hits = new Array(result.hits.total);
+                const resultSize = result.hits.hits.length;
+                const resultContainer = this.shallowCloneElasticResult(result);
 
                 const bar = new ProgressBarWrapper(total);
-                this.onResult(doQuery, queryItem, result, bar, resultSize, resultSize)
+                this.onResult(queryItem, resultContainer as ElasticResult, bar, resultSize, resultSize)
                     .then(resolve)
                     .catch(reject);
             }).then(resolve).catch(reject);

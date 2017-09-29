@@ -2,15 +2,15 @@ const mocha = require("mocha");
 const chai = require("chai");
 const sinon = require("sinon");
 const elastic = require("../../src/services/ElasticQueryable");
-const FileCache = require("../../src/services/FileCache").FileCache;
+const FileCache = require("../../src/services/FileCache");
 const mockFs = require("mock-fs");
 
 chai.use(require("chai-as-promised"));
 chai.should();
 const error = new Error("oh no");
 const range = {
-    from : new Date(),
-    to : new Date()
+    from: new Date(),
+    to: new Date()
 };
 
 describe("Given I want to get results from an ElasticQueryExecutor", () => {
@@ -24,6 +24,10 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
         mockFs(`${process.cwd()}/data`);
         sandbox = sinon.sandbox.create();
         fakeRequest = sandbox.stub(request, "execute");
+    });
+
+    afterEach(() => {
+        sandbox.restore();
     });
 
     describe("and the server responds with an error", () => {
@@ -73,8 +77,6 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
     });
 
     describe("and the server responds with a set containing two pages", () => {
-        beforeEach
-
         describe("and the second fails", () => {
             beforeEach(() => {
                 fakeRequest.onFirstCall().resolves(firstPageResult);
@@ -98,7 +100,7 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
                 fakeRequest.onFirstCall().resolves(firstPageResult);
                 fakeRequest.onSecondCall().resolves(secondPageResult);
                 fakeRequest.onThirdCall().rejects(error);
-                writeFile = sandbox.spy(FileCache.prototype, "set");
+                writeFile = sandbox.spy(FileCache.FileCache.prototype, "set");
                 result = subject.start("url", range);
             });
 
@@ -107,20 +109,72 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
                 return result.should.eventually.deep.equal(combined);
             });
 
+            it("should have asked for existing cache items twice", () => {
+                setImmediate(() => {
+                    hasFile.callCount.should.be.equal(2);
+                });
+            });
+
             it("should have requested a result page exactly twice", () => {
                 return result.should.not.be.rejected;
             });
 
-            xit("should have written to cache twice", () => {
-                writeFile.callCount.should.be.equal(2);
+            it("should have written to cache twice", () => {
+                setImmediate(() => {
+                    writeFile.callCount.should.be.equal(2);
+                });
             });
         });
 
     });
 
+    describe("And one of the results is in the cache, while the other one doesn't", () => {
+        let writeFile, hasFile, getFile;
+
+        beforeEach(() => {
+            fakeRequest.onFirstCall().resolves(firstPageResult)
+                .onSecondCall().rejects(error);
+            hasFile = sandbox.stub(FileCache.FileCache.prototype, "has");
+            hasFile.onFirstCall().returns(false).onSecondCall().returns(true);
+
+            getFile = sandbox.stub(FileCache.FileCache.prototype, "get")
+                .onFirstCall().resolves(secondPageResult)
+                .onSecondCall().rejects(error);
+            writeFile = sandbox.spy(FileCache.FileCache.prototype, "set");
+            result = subject.start("url", range);
+        });
+
+        it("should return a combined result", () => {
+            const combined = { hits: { total: firstPageResult.hits.total, hits: [...firstPageResult.hits.hits, ...secondPageResult.hits.hits] } };
+            return result.should.eventually.deep.equal(combined);
+        });
+
+        it("should have requested a result page only once", () => {
+            return result.should.not.be.rejected;
+        });
+
+        it("should have asked for existing cache items twice", () => {
+            setImmediate(() => {
+                hasFile.callCount.should.be.equal(2);
+            });
+        });
+
+        it("should have loaded a file from cache once", () => {
+            setImmediate(() => {
+                getFile.callCount.should.be.equal(1);
+            });
+        });
+
+        it("should have written to cache once", () => {
+            setImmediate(() => {
+                writeFile.callCount.should.be.equal(1);
+            });
+        });
+    });
+
     afterEach(() => {
         sandbox.restore();
-    })
+    });
 });
 
 
