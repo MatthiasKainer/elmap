@@ -6,6 +6,8 @@ import { DateRange } from "../models/Date";
 import { FileCache } from "./FileCache";
 var ProgressBar = require('ascii-progress');
 
+export const requestWrapper = request;
+
 export class ElasticQueryExecutor {
     public execute(url: string, json: Object) {
         return new Promise((resolve, reject) => {
@@ -15,7 +17,7 @@ export class ElasticQueryExecutor {
                 auth = uri.auth;
                 url = url.replace(uri.auth + "@", "");
             }
-            request({ method: "GET", url, auth, json }, (err, result) => {
+            requestWrapper({ method: "GET", url, auth, json }, (err, result) => {
                 if (err || result.statusCode > 399) return reject(err || new Error(result.body.error));
                 else resolve((!result.body.hits ? JSON.parse(result.body) : result.body));
             });
@@ -152,7 +154,7 @@ export class ElasticResultHandler {
                         response.hits.hits.length,
                         index + response.hits.hits.length)
                         .then(resolve).catch(reject);
-                }, result.hits.hits.length).then(resolve).catch(reject);
+                }, index).then(resolve).catch(reject);
             }
 
             return resolve(result);
