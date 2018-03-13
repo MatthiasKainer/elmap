@@ -11,13 +11,7 @@ export const requestWrapper = request;
 export class ElasticQueryExecutor {
     public execute(url: string, json: Object) {
         return new Promise((resolve, reject) => {
-            const uri = require("url").parse(url);
-            let auth = null;
-            if (uri.auth) {
-                auth = uri.auth;
-                url = url.replace(uri.auth + "@", "");
-            }
-            requestWrapper({ method: "GET", url, auth, json }, (err, result) => {
+            requestWrapper({ method: "GET", url, json }, (err, result) => {
                 if (err || result.statusCode > 399) return reject(err || new Error(result.body.error));
                 else resolve((!result.body.hits ? JSON.parse(result.body) : result.body));
             });
