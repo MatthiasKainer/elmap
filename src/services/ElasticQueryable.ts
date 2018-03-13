@@ -27,7 +27,7 @@ export class ElasticQueryExecutor {
 
 class ElasticQueryItem {
     private body: Object;
-    private size = 1000;
+    private size = process.env.ELMAP_QUERYBATCH || 1000;
     query: string;
     range: DateRange;
 
