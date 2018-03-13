@@ -7,6 +7,7 @@ import { FileCache } from "./FileCache";
 var ProgressBar = require('ascii-progress');
 
 export const requestWrapper = request;
+const size = process.env.ELMAP_QUERYBATCH || 1000;
 
 export class ElasticQueryExecutor {
     public execute(url: string, json: Object) {
@@ -21,7 +22,6 @@ export class ElasticQueryExecutor {
 
 class ElasticQueryItem {
     private body: Object;
-    private size = process.env.ELMAP_QUERYBATCH || 1000;
     query: string;
     range: DateRange;
 
@@ -31,11 +31,14 @@ class ElasticQueryItem {
     }
 
     public getSize() {
-        return this.size;
+        return size;
     }
 
     public getBody(from: number) {
         return {
+            "version": true,
+            "from": from,
+            "size": size,
             "query": {
                 "filtered": {
                     "query": {
@@ -60,8 +63,6 @@ class ElasticQueryItem {
                     }
                 }
             },
-            "from": from,
-            "size": this.size,
             "fields": [
                 "*",
                 "_source"
@@ -113,7 +114,7 @@ export class ElasticResultHandler {
 
     private doUrlQuery(query: ElasticQueryItem, onLoaded: (resolve, reject, result: ElasticResult) => Promise<any>, fromItem: number = 0) {
         return new Promise((resolve, reject) => {
-            this.query.execute(this.url, query.getBody(fromItem))
+            this.query.execute(`${this.url}?from=${fromItem}&size=${size}`, query.getBody(fromItem))
                 .then((result: ElasticResult) => {
                     new FileCache().set(query.range, query.query, fromItem, result);
                     return onLoaded(resolve, reject, result);
