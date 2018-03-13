@@ -8,6 +8,7 @@ var ProgressBar = require('ascii-progress');
 
 export const requestWrapper = request;
 const size = process.env.ELMAP_QUERYBATCH || 1000;
+const timestampField = process.env.ELMAP_TIMESTAMP || "@timestamp";
 
 export class ElasticQueryExecutor {
     public execute(url: string, json: Object) {
@@ -35,7 +36,7 @@ class ElasticQueryItem {
     }
 
     public getBody(from: number) {
-        return {
+        const body = {
             "version": true,
             "from": from,
             "size": size,
@@ -51,12 +52,7 @@ class ElasticQueryItem {
                         "bool": {
                             "must": [
                                 {
-                                    "range": {
-                                        "@timestamp": {
-                                            "gte": this.range.from,
-                                            "lte": this.range.to
-                                        }
-                                    }
+                                    "range": { }
                                 }
                             ]
                         }
@@ -68,11 +64,14 @@ class ElasticQueryItem {
                 "_source"
             ],
             "script_fields": {},
-            "fielddata_fields": [
-                "timestamp",
-                "@timestamp"
-            ]
+            "fielddata_fields": []
         };
+        body.query.filtered.filter.bool.must[0].range[timestampField] = {
+            "gte": this.range.from,
+            "lte": this.range.to
+        }
+        body.fielddata_fields.push(timestampField);
+        return body;
     }
 }
 
