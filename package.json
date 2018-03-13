@@ -25,9 +25,9 @@
   "dependencies": {
     "ascii-progress": "1.0.5",
     "get-cursor-position": "1.0.5",
-    "moment": "2.18.1",
-    "request": "2.0.3",
-    "yargs": "8.0.2"
+    "moment": "2.21.0",
+    "request": "2.85.0",
+    "yargs": "11.0.0"
   },
   "repository": {
     "type": "git",
