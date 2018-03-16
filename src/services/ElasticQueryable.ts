@@ -72,7 +72,6 @@ class ElasticQueryItem {
             "lte": this.range.to
         }
         body.fielddata_fields.push(timestampField);
-        console.log(body);
         return body;
     }
 }
