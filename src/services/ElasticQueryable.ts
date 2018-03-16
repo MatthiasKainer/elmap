@@ -4,6 +4,7 @@ import { ElasticResult } from "../models/ElasticResult";
 import { Queryable } from "./Queryable";
 import { DateRange } from "../models/Date";
 import { FileCache } from "./FileCache";
+require("dotenv").config();
 var ProgressBar = require('ascii-progress');
 
 export const requestWrapper = request;
@@ -71,6 +72,7 @@ class ElasticQueryItem {
             "lte": this.range.to
         }
         body.fielddata_fields.push(timestampField);
+        console.log(body);
         return body;
     }
 }
