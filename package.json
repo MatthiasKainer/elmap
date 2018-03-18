@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "ascii-progress": "1.0.5",
+    "dotenv": "^5.0.1",
     "get-cursor-position": "1.0.5",
     "moment": "2.21.0",
     "request": "2.85.0",
