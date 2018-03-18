@@ -1,6 +1,6 @@
 {
   "name": "elmap",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "simple elasticsearch queries",
   "main": "app.js",
   "scripts": {
@@ -24,6 +24,8 @@
   },
   "dependencies": {
     "ascii-progress": "1.0.5",
+    "dotenv": "^5.0.1",
+    "elasticsearch": "^14.2.0",
     "get-cursor-position": "1.0.5",
     "moment": "2.21.0",
     "request": "2.85.0",
