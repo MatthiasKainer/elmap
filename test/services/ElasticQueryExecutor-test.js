@@ -15,17 +15,19 @@ describe("Given I call the ElasticQueryExecutor", () => {
 
     beforeEach(() => {
         sandbox.reset();
-        client = {
-            search : sandbox.stub()
+        client = sandbox.stub();
+        const clientWrapper = function() {
+            this.search = client;
+            return this;
         };
-        elastic.clientWrapper = client;
+        elastic.ClientWrapper = clientWrapper;
     });
 
     afterEach(() => sandbox.restore());
 
     describe("And request fails", () => {
         beforeEach(() => {
-            client.search.yields(error);
+            client.yields(error);
             result = new elastic.NativeElasticQueryExecutor()
                 .execute("http://elastic.co", {});
         });
@@ -38,7 +40,7 @@ describe("Given I call the ElasticQueryExecutor", () => {
     describe("And request succeeds and is a json", () => {
         const serverResponse = { hits : { hits: [], total : 0} };
         beforeEach(() => {
-            client.search.yields(null, serverResponse);
+            client.yields(null, serverResponse);
             result = new elastic.NativeElasticQueryExecutor()
                 .execute("http://elastic.co", {}, () => {});
         });

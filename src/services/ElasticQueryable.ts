@@ -10,7 +10,7 @@ require("dotenv").config();
 var ProgressBar = require('ascii-progress');
 
 export const requestWrapper = request;
-export const clientWrapper = Client;
+export const ClientWrapper = Client;
 const size = process.env.ELMAP_QUERYBATCH || 10;
 const timestampField = process.env.ELMAP_TIMESTAMP || "@timestamp";
 
@@ -24,12 +24,12 @@ export class NativeElasticQueryExecutor {
     public execute(url: string, body: Object, onLoaded) {
         return new Promise((resolve, reject) => {
             let found = 0;
-            const client = new Client({ hosts: [url] });
+            const client = new ClientWrapper({ hosts: [url] });
             const result = { hits : { hits : null, total : 0} };
             const headers = {
                 "kbn-xsrf": "reporting"
             };
-            clientWrapper.search({
+            client.search({
                 index: this.index,
                 scroll: "30s", // keep the search results "scrollable" for 30 seconds
                 size,
