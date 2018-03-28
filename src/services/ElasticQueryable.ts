@@ -1,22 +1,66 @@
 import * as request from 'request';
 import * as moment from 'moment';
+import { RequestBodySearch, BoolQuery, RangeQuery, QueryStringQuery, Sort } from "elastic-builder";
 import { ElasticResult } from "../models/ElasticResult";
 import { Queryable } from "./Queryable";
 import { DateRange } from "../models/Date";
 import { FileCache } from "./FileCache";
+import { Client } from "elasticsearch";
 require("dotenv").config();
 var ProgressBar = require('ascii-progress');
 
 export const requestWrapper = request;
-const size = process.env.ELMAP_QUERYBATCH || 1000;
+export const clientWrapper = Client;
+const size = process.env.ELMAP_QUERYBATCH || 10;
 const timestampField = process.env.ELMAP_TIMESTAMP || "@timestamp";
 
-export class ElasticQueryExecutor {
-    public execute(url: string, json: Object) {
+export class NativeElasticQueryExecutor {
+    index: string;
+
+    public constructor(index: string) {
+        this.index = index;
+    }
+
+    public execute(url: string, body: Object, onLoaded) {
         return new Promise((resolve, reject) => {
-            requestWrapper({ method: "GET", url, json }, (err, result) => {
-                if (err || result.statusCode > 399) return reject(err || new Error(result.body.error));
-                else resolve((!result.body.hits ? JSON.parse(result.body) : result.body));
+            let found = 0;
+            const client = new Client({ hosts: [url] });
+            const result = { hits : { hits : null, total : 0} };
+            const headers = {
+                "kbn-xsrf": "reporting"
+            };
+            clientWrapper.search({
+                index: this.index,
+                scroll: "30s", // keep the search results "scrollable" for 30 seconds
+                size,
+                body,
+                headers 
+            }, function getMoreUntilDone(error, response) {
+                if (error) { return reject(error); }
+
+                // collect the title from each response
+                if (!result.hits.hits) { 
+                    result.hits.hits = new Array(response.hits.total); 
+                    result.hits.total = response.hits.total;
+                }
+                response.hits.hits.forEach((element, index) => {
+                    result.hits.hits[found + index] = element;
+                });
+                
+                onLoaded(response, found);
+                found += response.hits.hits.length;
+
+                if (response.hits.total > found) {
+                    // ask elasticsearch for the next set of hits from this search
+                    client.scroll({
+                        scrollId: response._scroll_id,
+                        scroll: "30s",
+                        headers
+                    }, getMoreUntilDone);
+                } else {
+                    console.log("scroll search complete");
+                    resolve(result);
+                }
             });
         });
     }
@@ -36,6 +80,21 @@ class ElasticQueryItem {
         return size;
     }
 
+    public getScrollBody() {
+        const bodyBuilder = new RequestBodySearch();
+        const boolQuery = new BoolQuery().must([
+            new RangeQuery(timestampField)
+                .from(this.range.from.getTime())
+                .to(this.range.to.getTime()),
+            new QueryStringQuery(this.query)
+                .analyzeWildcard(true)
+        ]);
+        bodyBuilder.query(boolQuery);
+        bodyBuilder.sort(new Sort(timestampField, "desc"))
+
+        return bodyBuilder.toJSON();
+    }
+
     public getBody(from: number) {
         const body = {
             "version": true,
@@ -53,7 +112,7 @@ class ElasticQueryItem {
                         "bool": {
                             "must": [
                                 {
-                                    "range": { }
+                                    "range": {}
                                 }
                             ]
                         }
@@ -97,12 +156,12 @@ class ProgressBarWrapper {
 }
 
 export class ElasticResultHandler {
-    query: ElasticQueryExecutor;
+    nativeQuery: NativeElasticQueryExecutor;
     result: ElasticResult;
     url: string;
 
-    public constructor(query: ElasticQueryExecutor, url: string) {
-        this.query = query;
+    public constructor(nativeQuery: NativeElasticQueryExecutor, url: string) {
+        this.nativeQuery = nativeQuery;
         this.url = url;
     }
 
@@ -114,11 +173,10 @@ export class ElasticResultHandler {
 
     private doUrlQuery(query: ElasticQueryItem, onLoaded: (resolve, reject, result: ElasticResult) => Promise<any>, fromItem: number = 0) {
         return new Promise((resolve, reject) => {
-            this.query.execute(`${this.url}?from=${fromItem}&size=${size}`, query.getBody(fromItem))
-                .then((result: ElasticResult) => {
-                    new FileCache().set(query.range, query.query, fromItem, result);
-                    return onLoaded(resolve, reject, result);
-                })
+            this.nativeQuery.execute(this.url, query.getScrollBody(), (result, fromIndex) => {
+                new FileCache().set(query.range, query.query, fromIndex, result);
+            })
+                .then((result: ElasticResult) => onLoaded(resolve, reject, result))
                 .catch(reject);
         });
     }
@@ -156,7 +214,7 @@ export class ElasticResultHandler {
         });
     }
 
-    private doCacheQueryFactory(query: ElasticQueryItem, onLoaded: (resolve, reject, result: ElasticResult) => Promise<any>, fromItem: number = 0) { 
+    private doCacheQueryFactory(query: ElasticQueryItem, onLoaded: (resolve, reject, result: ElasticResult) => Promise<any>, fromItem: number = 0) {
         return new FileCache().has(query.range, query.query, fromItem)
             ? this.doCacheQuery(query, onLoaded, fromItem)
             : this.doUrlQuery(query, onLoaded, fromItem)
@@ -166,19 +224,19 @@ export class ElasticResultHandler {
         const total = result.hits.total;
         const resultSize = result.hits.hits.length;
         const hits = new Array(total);
-    
+
         // shallow clone result with complete hits
-        let resultContainer : any = { hits : {hits} };
+        let resultContainer: any = { hits: { hits } };
         Object.keys(result).filter(key => key !== "hits").forEach(key => {
             resultContainer[key] = result[key];
         });
-    
+
         Object.keys(result.hits).filter(key => key !== "hits").forEach(key => {
             resultContainer.hits[key] = result.hits[key];
         });
-    
+
         this.push(resultContainer.hits.hits, 0, result.hits.hits);
-    
+
         return resultContainer;
     }
 
@@ -212,12 +270,15 @@ export class ElasticResultHandler {
 
 export class ElasticQuery implements Queryable {
     url: string;
+    index: string;
 
     public constructor(url, index) {
-        this.url = `${url}/${index}/_search`
+        this.index = index;
+        this.url = url;
     }
 
     public doQuery(query: string, range: DateRange) {
-        return new ElasticResultHandler(new ElasticQueryExecutor(), this.url).start(query, range);
+        return new ElasticResultHandler(new NativeElasticQueryExecutor(this.index), this.url)
+            .start(query, range);
     }
 }

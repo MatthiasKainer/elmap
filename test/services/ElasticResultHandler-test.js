@@ -17,7 +17,7 @@ describe("Given I want to get results from an ElasticQueryExecutor", () => {
     let sandbox = sinon.sandbox.create();
     let fakeRequest = sandbox.stub();
     let result = new Promise((resolve, reject) => resolve());
-    const request = new elastic.ElasticQueryExecutor();
+    const request = new elastic.NativeElasticQueryExecutor();
     const subject = new elastic.ElasticResultHandler(request);
 
     beforeEach(() => {
