@@ -10,7 +10,7 @@ require("dotenv").config();
 var ProgressBar = require('ascii-progress');
 
 export const requestWrapper = request;
-const size = process.env.ELMAP_QUERYBATCH || 1000;
+const size = process.env.ELMAP_QUERYBATCH || 10;
 const timestampField = process.env.ELMAP_TIMESTAMP || "@timestamp";
 
 export class NativeElasticQueryExecutor {
@@ -32,6 +32,7 @@ export class NativeElasticQueryExecutor {
             client.search({
                 index: this.index,
                 scroll: "30s", // keep the search results "scrollable" for 30 seconds
+                size,
                 body,
                 headers 
             }, function getMoreUntilDone(error, response) {
