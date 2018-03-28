@@ -10,6 +10,7 @@ require("dotenv").config();
 var ProgressBar = require('ascii-progress');
 
 export const requestWrapper = request;
+export const clientWrapper = Client;
 const size = process.env.ELMAP_QUERYBATCH || 10;
 const timestampField = process.env.ELMAP_TIMESTAMP || "@timestamp";
 
@@ -18,7 +19,6 @@ export class NativeElasticQueryExecutor {
 
     public constructor(index: string) {
         this.index = index;
-
     }
 
     public execute(url: string, body: Object, onLoaded) {
@@ -29,13 +29,15 @@ export class NativeElasticQueryExecutor {
             const headers = {
                 "kbn-xsrf": "reporting"
             };
-            client.search({
+            clientWrapper.search({
                 index: this.index,
                 scroll: "30s", // keep the search results "scrollable" for 30 seconds
                 size,
                 body,
                 headers 
             }, function getMoreUntilDone(error, response) {
+                if (error) { return reject(error); }
+
                 // collect the title from each response
                 if (!result.hits.hits) { 
                     result.hits.hits = new Array(response.hits.total); 
@@ -59,17 +61,6 @@ export class NativeElasticQueryExecutor {
                     console.log("scroll search complete");
                     resolve(result);
                 }
-            });
-        });
-    }
-}
-
-export class ElasticQueryExecutor {
-    public execute(url: string, json: Object) {
-        return new Promise((resolve, reject) => {
-            requestWrapper({ method: "GET", url, json }, (err, result) => {
-                if (err || result.statusCode > 399) return reject(err || new Error(result.body.error));
-                else resolve((!result.body.hits ? JSON.parse(result.body) : result.body));
             });
         });
     }
@@ -165,13 +156,11 @@ class ProgressBarWrapper {
 }
 
 export class ElasticResultHandler {
-    query: ElasticQueryExecutor;
     nativeQuery: NativeElasticQueryExecutor;
     result: ElasticResult;
     url: string;
 
-    public constructor(query: ElasticQueryExecutor, nativeQuery: NativeElasticQueryExecutor, url: string) {
-        this.query = query;
+    public constructor(nativeQuery: NativeElasticQueryExecutor, url: string) {
         this.nativeQuery = nativeQuery;
         this.url = url;
     }
@@ -289,7 +278,7 @@ export class ElasticQuery implements Queryable {
     }
 
     public doQuery(query: string, range: DateRange) {
-        return new ElasticResultHandler(new ElasticQueryExecutor(), new NativeElasticQueryExecutor(this.index), this.url)
+        return new ElasticResultHandler(new NativeElasticQueryExecutor(this.index), this.url)
             .start(query, range);
     }
 }
