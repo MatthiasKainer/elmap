@@ -17,7 +17,8 @@ const query = "item";
 
 const basePath = process.cwd();
 const dataPath = `${basePath}/data`;
-const cacheItemDir = `${dataPath}/${range.from.getTime()}-${range.to.getTime()}-${query}`
+const encodedQuery = Buffer.from(query).toString('base64');
+const cacheItemDir = `${dataPath}/${range.from.getTime()}-${range.to.getTime()}-${encodedQuery}`;
 const fileName = `0`;
 const fullFileName = `${cacheItemDir}/${fileName}`;
 const fileContent = { "not" : "important" };

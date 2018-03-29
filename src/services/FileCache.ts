@@ -6,7 +6,8 @@ export class FileCache {
     private makePath(range: DateRange, query, create: boolean = true) {
         const dataFolder = process.env.ELMAP_PATH || "data";
         const root = `${process.cwd()}/${dataFolder}`;
-        const target = `${root}/${range.from.getTime()}-${range.to.getTime()}-${query}`;
+        const encodedQuery = Buffer.from(query).toString("base64");
+        const target = `${root}/${range.from.getTime()}-${range.to.getTime()}-${encodedQuery}`;
         if (create && !fs.existsSync(root)) fs.mkdirSync(root);
         if (create && !fs.existsSync(target)) fs.mkdirSync(target);
         return target;
