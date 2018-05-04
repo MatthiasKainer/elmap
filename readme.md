@@ -131,6 +131,10 @@ If your result changes because you changed your elasticsearch index for instance
 
 Note that as long as you query the last 15 minutes (default) the cache won't do you any good, as the last 15 Minutes change for like every millisecond!
 
+### Result
+
+Elmap will return an promise with the result of the transformation, so continue your code there and not in the transform callback. 
+
 ## Helpers
 
 To make object creation more convienient, elmap comes with some helpers to make object creation easier.
@@ -161,3 +165,12 @@ Object helpers allow you to safely and easy set fields in objects that does not 
 | push| [test](blob/master/test/utils/push.js) | Pushes an element onto an array. Creates array if not there yet. |
 | increment| [test](blob/master/test/utils/increment.js) | Increments a number on a field. |
 | stringcat| [test](blob/master/test/utils/stringcat.js) | Adds a value to the end of a string |
+
+Using this helpers, the above example can be reduced to:
+
+```js
+        const {instance, trace, duration} = result;
+        helper.push(result, `${instance}.${trace}`, duration);
+```
+
+The nested object will be created automatically for you.
