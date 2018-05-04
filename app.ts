@@ -24,7 +24,12 @@ export default function run<T>(params : ElmapParams<T>): Promise<T> {
     validateString(params.index, "The elastic search index");
     validateString(params.query, "The query");
     console.log(`Query for "${params.query}"`);
-    return performQuery(params.query, params.range,  params.transform, new ElasticQuery(params.url, params.index));
+    params.range = params.range || { from : moment().subtract(15, "minutes").toDate(), to: moment().toDate() };
+    params.transform = params.transform || ((result : ElasticResult) => result as any as T);
+    return performQuery(params.query, 
+        params.range, 
+        params.transform, 
+        new ElasticQuery(params.url, params.index));
 }
 
 export { helpers };
