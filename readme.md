@@ -43,23 +43,22 @@ When you want to search further anyway, elmap can help.
 
 ```js
 import elmap from "elmap";
+import {helpers} from "elmap";
 
 const transform = (result) => {
-    result.hits.hits.map(hit => {
+    return result.hits.hits.map(hit => {
         const reg = /.*?'(.*?)'.*?'(.*?)'.*?'(.*?)'/;
-        const matches = reg.match(result._source.message);
+        const matches = reg.exec(hit.message);
         return {
-            duration : parseInt(result._source.callDurationMs),
+            duration : parseInt(hit.callDurationMs),
             trace : matches[2],
             instance : matches[3]
         };
     })
-    .filter(hit => hit.duration > 100)
-    .reduce((result, current) => {
-        const {instance, trace, duration} = result;
-        result[instance] = result[instance] || {};
-        result[instance][trace] = result[instance][trace] || [];
-        result[instance][trace].push(duration);
+    .filter(hit => hit.duration > 50)
+    .reduce((hit, current) => {
+        const {instance, trace, duration} = current;
+        return helpers.push(hit, `${instance}.${trace}`, duration);
     }, {});
 };
 
